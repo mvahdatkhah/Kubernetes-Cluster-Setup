@@ -11,6 +11,7 @@ CONTAINERD_VERSION="2.0.0"
 RUNC_VERSION="1.3.0"
 CNI_VERSION="1.6.0"
 POD_CIDR="10.10.0.0/16"
+NERDCTL_VERSION="v2.1.2"
 APISERVER_ADVERTISE_ADDRESS="192.168.56.109"  # ⛳ Replace with actual IP
 
 # --- Provide your kubeadm join command below! ⬇️⬇️⬇️
@@ -71,10 +72,7 @@ sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/conf
 sudo systemctl restart containerd
 
 # ** Install nerdctl **
-# https://github.com/containerd/nerdctl
-# https://github.com/containerd/nerdctl/blob/main/docs/command-reference.md
 echo "🐳 Installing nerdctl (containerd CLI) ..."
-NERDCTL_VERSION="1.5.0"  # adjust if needed
 wget https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-full-${NERDCTL_VERSION}-linux-amd64.tar.gz -O /tmp/nerdctl.tar.gz
 sudo tar -C /usr/local/bin -xzf /tmp/nerdctl.tar.gz nerdctl
 rm /tmp/nerdctl.tar.gz
