@@ -31,7 +31,8 @@ CONTAINERD_VERSION="2.0.0"
 RUNC_VERSION="1.3.0"
 CNI_VERSION="1.6.0"
 POD_CIDR="10.10.0.0/16"
-APISERVER_ADVERTISE_ADDRESS="192.168.56.109"  # ⛳ Replace with actual IP
+NERDCTL_VERSION="v2.1.2"
+APISERVER_ADVERTISE_ADDRESS="192.168.56.109"
 
 # --- Disable swap ❌💾 ---
 echo "🧹 Disabling swap..."
@@ -82,9 +83,8 @@ systemctl enable --now containerd
 
 # Install nerdctll
 echo "🐳 Installing nerdctl (containerd CLI) ..."
-NERDCTL_VERSION="1.5.0"  # adjust if needed
 wget https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-full-${NERDCTL_VERSION}-linux-amd64.tar.gz -O /tmp/nerdctl.tar.gz
-sudo tar -C /usr/local/bin -xzf /tmp/nerdctl.tar.gz nerdctl
+tar -C /usr/local -xzf /tmp/nerdctl.tar.gz
 rm /tmp/nerdctl.tar.gz
 
 # Install runc 🛠️
