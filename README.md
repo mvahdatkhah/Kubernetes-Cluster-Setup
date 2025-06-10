@@ -58,15 +58,10 @@ kubectl get nodes
 
 ## 📜 Notes
 
-    The first master node is initialized with kubeadm init.
-
-    Additional master nodes join using kubeadm join --control-plane.
-
-    Worker nodes join using kubeadm join.
-
-    Containerd is used as the container runtime.
-
-    Swap is disabled as required by Kubernetes.
-
-    System dependencies (CNI plugins, runc, nerdctl) are installed.
+- The first master node is initialized with kubeadm init.
+- Additional master nodes join using kubeadm join --control-plane.
+- Worker nodes join using kubeadm join.
+- Containerd is used as the container runtime.
+- **Swap** is disabled as required by Kubernetes.
+- System dependencies (CNI plugins, runc, nerdctl) are installed.
 
