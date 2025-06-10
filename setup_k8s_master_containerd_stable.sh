@@ -99,8 +99,8 @@ echo "Update apt package index, then install kubectl:"
 apt-get update
 
 echo "📥 Installing kubelet, kubeadm, kubectl..."
-apt-get install -y kubelet=v${K8S_VERSION} kubeadm=v${K8S_VERSION} kubectl=v${K8S_VERSION}
-apt-mark hold kubelet=v${K8S_VERSION} kubeadm=v${K8S_VERSION} kubectl=v${K8S_VERSION}
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
 
 # Init Kubernetes master 🧠👑
 echo "🧠 Initializing Kubernetes master node..."
