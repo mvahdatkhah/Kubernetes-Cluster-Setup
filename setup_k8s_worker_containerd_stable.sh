@@ -87,8 +87,8 @@ sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list   # helps tools such as c
 
 echo "📥 Installing kubelet, kubeadm, kubectl..."
 apt-get update
-apt-get install -y kubelet=${K8S_VERSION} kubeadm=${K8S_VERSION} kubectl=${K8S_VERSION}
-apt-mark hold kubelet=${K8S_VERSION} kubeadm=${K8S_VERSION} kubectl=${K8S_VERSION}
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
 
 echo "🔑 Joining the Kubernetes cluster..."
 sudo $KUBEADM_JOIN_COMMAND
