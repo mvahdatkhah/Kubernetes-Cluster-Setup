@@ -6,7 +6,7 @@ set -euo pipefail
 
 # --- Configuration 🛠️ ---
 echo "🔧 Setting version variables..."
-K8S_VERSION="1.33.1"
+K8S_VERSION="1.33"
 CONTAINERD_VERSION="2.0.0"
 RUNC_VERSION="1.3.0"
 CNI_VERSION="1.6.0"
