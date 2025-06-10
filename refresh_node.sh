@@ -1,19 +1,26 @@
 #!/bin/bash
-set -e
+# Kubernetes Node Cleanup Script 🧹
+# Ensures a clean Kubernetes reset
 
-echo "🧹 Resetting Kubernetes and cleaning up..."
+set -euo pipefail
 
-sudo kubeadm reset -f
-sudo systemctl stop kubelet
-sudo systemctl stop containerd
+echo "🚀 Resetting Kubernetes and cleaning up system..."
 
-sudo rm -rf /etc/cni/net.d \
-  /var/lib/cni \
-  /var/lib/kubelet \
-  /etc/kubernetes \
-  ~/.kube \
-  /var/lib/etcd \
-  /etc/containerd \
-  /opt/cni/bin
+# Stop Kubernetes services
+systemctl stop kubelet containerd
 
-echo "✅ Cleanup done."
+# Perform kubeadm reset
+kubeadm reset -f
+
+# Remove Kubernetes-related directories
+echo "🗑️ Removing Kubernetes data..."
+rm -rf /etc/cni/net.d \
+       /var/lib/cni \
+       /var/lib/kubelet \
+       /etc/kubernetes \
+       ~/.kube \
+       /var/lib/etcd \
+       /etc/containerd \
+       /opt/cni/bin
+
+echo "✅ Cleanup complete!"
