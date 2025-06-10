@@ -104,7 +104,7 @@ apt-mark hold kubelet kubeadm kubectl
 
 # Init Kubernetes master 🧠👑
 echo "🧠 Initializing Kubernetes master node..."
-kubeadm init --control-plane-endpoint=${APISERVER_ADVERTISE_ADDRESS}:6443 --pod-network-cidr=${POD_CIDR} --apiserver-advertise-address=${APISERVER_ADVERTISE_ADDRESS}  --kubernetes-version=${K8S_VERSION}  --upload-certs
+kubeadm init --control-plane-endpoint=${APISERVER_ADVERTISE_ADDRESS}:6443 --pod-network-cidr=${POD_CIDR} --apiserver-advertise-address=${APISERVER_ADVERTISE_ADDRESS}  --kubernetes-version=v1.33.1 --upload-certs
 
 echo "🔐 Setting up kubeconfig for kubectl access..."
 mkdir -p $HOME/.kube
