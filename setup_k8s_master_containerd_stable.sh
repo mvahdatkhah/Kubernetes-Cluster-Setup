@@ -1,24 +1,4 @@
 #!/bin/bash
-set -e
-
-echo "🧹 Resetting Kubernetes and cleaning up..."
-
-sudo kubeadm reset -f
-sudo systemctl stop kubelet
-sudo systemctl stop containerd
-
-sudo rm -rf /etc/cni/net.d \
-  /var/lib/cni \
-  /var/lib/kubelet \
-  /etc/kubernetes \
-  ~/.kube \
-  /var/lib/etcd \
-  /etc/containerd \
-  /opt/cni/bin
-
-echo "✅ Cleanup done."
-➜  reset_k8s_master cat setup_k8s_master_containerd_stable.sh 
-#!/bin/bash
 # setup_k8s_master_containerd_stable.sh 🚀🎯
 # For Ubuntu-based systems 🐧🧊
 
@@ -26,13 +6,13 @@ set -euo pipefail
 
 # --- Configuration 🛠️ ---
 echo "🔧 Setting version variables..."
-K8S_VERSION="1.33.1"
+K8S_VERSION="1.33"
 CONTAINERD_VERSION="2.0.0"
 RUNC_VERSION="1.3.0"
 CNI_VERSION="1.6.0"
 POD_CIDR="10.10.0.0/16"
 NERDCTL_VERSION="2.1.2"
-APISERVER_ADVERTISE_ADDRESS="192.168.56.109"
+APISERVER_ADVERTISE_ADDRESS="192.168.56.109"  # ⛳ Replace with actual IP
 
 # --- Disable swap ❌💾 ---
 echo "🧹 Disabling swap..."
@@ -105,19 +85,24 @@ containerd config default | tee /etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 systemctl restart containerd
 
-# --- Kubernetes install ☸️🚀 ---
-echo "☸️ Installing Kubernetes components..."
-mkdir -p /etc/apt/keyrings
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+# Kubernetes install ☸️🚀
+echo "☸️  Installing Kubernetes components..."
+echo "If the folder `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below."
+mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/deb/Release.key | sudo gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg # allow unprivileged APT programs to read this keyring
 
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list   # helps tools such as command-not-found to work correctly
+
+echo "Update apt package index, then install kubectl:"
+apt-get update
 
 echo "📥 Installing kubelet, kubeadm, kubectl..."
-apt-get update
-apt-get install -y kubelet=${K8S_VERSION} kubeadm=${K8S_VERSION} kubectl=${K8S_VERSION}
-apt-mark hold kubelet=${K8S_VERSION} kubeadm=${K8S_VERSION} kubectl=${K8S_VERSION}
+apt-get install -y kubelet=v${K8S_VERSION} kubeadm=v${K8S_VERSION} kubectl=v${K8S_VERSION}
+apt-mark hold kubelet=v${K8S_VERSION} kubeadm=v${K8S_VERSION} kubectl=v${K8S_VERSION}
 
-# --- Init Kubernetes master 🧠👑 ---
+# Init Kubernetes master 🧠👑
 echo "🧠 Initializing Kubernetes master node..."
 kubeadm init --control-plane-endpoint=${APISERVER_ADVERTISE_ADDRESS}:6443 --pod-network-cidr=${POD_CIDR} --apiserver-advertise-address=${APISERVER_ADVERTISE_ADDRESS}  --kubernetes-version=${K8S_VERSION}  --upload-certs
 
