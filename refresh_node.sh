@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo " Resetting Kubernetes and cleaning up..."
+echo "🧹 Resetting Kubernetes and cleaning up..."
 
 sudo kubeadm reset -f
 sudo systemctl stop kubelet
@@ -16,4 +16,4 @@ sudo rm -rf /etc/cni/net.d \
   /etc/containerd \
   /opt/cni/bin
 
-echo " Cleanup done."
+echo "✅ Cleanup done."
