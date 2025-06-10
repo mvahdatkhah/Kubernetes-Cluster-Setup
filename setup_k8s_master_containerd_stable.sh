@@ -86,7 +86,7 @@ sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.to
 systemctl restart containerd
 
 # Kubernetes install ☸️🚀
-echo "☸️  Installing Kubernetes components..."
+echo "☸️ Installing Kubernetes components..."
 echo "If the folder `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below."
 mkdir -p -m 755 /etc/apt/keyrings
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/deb/Release.key | sudo gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
@@ -99,8 +99,8 @@ echo "Update apt package index, then install kubectl:"
 apt-get update
 
 echo "📥 Installing kubelet, kubeadm, kubectl..."
-apt-get install -y kubelet=v${K8S_VERSION} kubeadm=v${K8S_VERSION} kubectl=v${K8S_VERSION}
-apt-mark hold kubelet=v${K8S_VERSION} kubeadm=v${K8S_VERSION} kubectl=v${K8S_VERSION}
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
 
 # Init Kubernetes master 🧠👑
 echo "🧠 Initializing Kubernetes master node..."
