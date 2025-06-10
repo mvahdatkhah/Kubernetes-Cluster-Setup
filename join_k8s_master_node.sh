@@ -1,104 +1,104 @@
 #!/bin/bash
-# join_k8s_master_node.sh 🧠👑
-# For Ubuntu-based systems 🐧
+# Kubernetes Master Node Join Script 🧠👑
+# Compatible with Ubuntu-based systems 🐧
 
 set -euo pipefail
 
-# --- Configuration 🛠️ ---
-echo "🔧 Setting version variables..."
+# --- Configuration Variables 🛠️ ---
 K8S_VERSION="1.33"
 CONTAINERD_VERSION="2.0.0"
 RUNC_VERSION="1.3.0"
 CNI_VERSION="1.6.0"
 POD_CIDR="10.10.0.0/16"
 NERDCTL_VERSION="2.1.2"
-APISERVER_ADVERTISE_ADDRESS="192.168.56.109"  # ⛳ Replace with actual IP
+APISERVER_ADVERTISE_ADDRESS="192.168.56.109"  # Replace with actual IP
 
-# --- Variables (Replace these!) ---
+# --- Master Node Join Parameters (Replace These) ---
 MASTER_API_SERVER="${APISERVER_ADVERTISE_ADDRESS}:6443"
 TOKEN="<YOUR_KUBEADM_TOKEN>"
 DISCOVERY_HASH="<YOUR_DISCOVERY_HASH>"
 CERT_KEY="<YOUR_CERTIFICATE_KEY>"
 
-echo "🕒 Setting timezone to Asia/Tehran 🌍"
-timedatectl set-timezone Asia/Tehran
-
-echo "❌ Disabling swap to satisfy Kubernetes requirements 💾"
+# --- System Preparation ---
+echo "🧹 Disabling swap..."
 swapoff -a
 sed -i.bak '/ swap / s/^/#/' /etc/fstab
 
-echo "🧬 Loading kernel modules and setting sysctl parameters..."
+echo "🌐 Setting timezone to Asia/Tehran..."
+timedatectl set-timezone Asia/Tehran
+
+echo "🔐 Configuring kernel modules..."
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay
 br_netfilter
 EOF
-
 modprobe overlay
 modprobe br_netfilter
 
+echo "🛡️ Configuring sysctl parameters..."
 cat <<EOF | tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward                 = 1
+net.ipv4.ip_forward = 1
 EOF
-
 sysctl --system
 
+# --- Install Dependencies ---
 echo "📦 Installing dependencies..."
-apt-get update
-apt-get install -y ca-certificates curl gnupg lsb-release apt-transport-https
+apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release apt-transport-https
 
-echo "📥 Downloading and installing containerd v${CONTAINERD_VERSION}..."
-cd /tmp
-wget https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
-sudo tar Czxvf /usr/local containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz
+# --- Install Containerd ---
+echo "🐳 Installing containerd..."
+wget -qO /tmp/containerd.tar.gz "https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz"
+tar -C /usr/local -xzf /tmp/containerd.tar.gz
+rm /tmp/containerd.tar.gz
 
-echo "🧩 Setting up containerd systemd service..."
-wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
-sudo mv containerd.service /usr/lib/systemd/system/
-sudo systemctl daemon-reexec
-sudo systemctl enable --now containerd
+echo "🔧 Setting up containerd systemd service..."
+wget -qO /usr/lib/systemd/system/containerd.service "https://raw.githubusercontent.com/containerd/containerd/main/containerd.service"
+systemctl daemon-reexec
+systemctl enable --now containerd
 
-# ** Install nerdctl **
-echo "🐳 Installing nerdctl (containerd CLI) ..."
-wget https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-full-${NERDCTL_VERSION}-linux-amd64.tar.gz -O /tmp/nerdctl.tar.gz
-sudo tar -C /usr/local/bin -xzf /tmp/nerdctl.tar.gz nerdctl
+# --- Install Nerdctl ---
+echo "🐳 Installing nerdctl..."
+wget -qO /tmp/nerdctl.tar.gz "https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-full-${NERDCTL_VERSION}-linux-amd64.tar.gz"
+tar -C /usr/local -xzf /tmp/nerdctl.tar.gz
 rm /tmp/nerdctl.tar.gz
 
-echo "🛠 Installing runc v${RUNC_VERSION}..."
-wget https://github.com/opencontainers/runc/releases/download/v${RUNC_VERSION}/runc.amd64
-sudo install -m 755 runc.amd64 /usr/local/sbin/runc
+# --- Install Runc ---
+echo "🔧 Installing runc..."
+wget -qO /usr/local/sbin/runc "https://github.com/opencontainers/runc/releases/download/v${RUNC_VERSION}/runc.amd64"
+chmod +x /usr/local/sbin/runc
 
-echo "🌐 Installing CNI plugins v${CNI_VERSION}..."
-sudo mkdir -p /opt/cni/bin
-wget https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-amd64-v${CNI_VERSION}.tgz
-sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v${CNI_VERSION}.tgz
+# --- Install CNI Plugins ---
+echo "🌐 Installing CNI plugins..."
+mkdir -p /opt/cni/bin
+wget -qO /tmp/cni-plugins.tgz "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-amd64-v${CNI_VERSION}.tgz"
+tar -C /opt/cni/bin -xzf /tmp/cni-plugins.tgz
+rm /tmp/cni-plugins.tgz
 
-echo "🧾 Configuring containerd..."
-sudo mkdir -p /etc/containerd
-sudo containerd config default | sudo tee /etc/containerd/config.toml
-sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
-sudo systemctl restart containerd
+# --- Configure Containerd ---
+echo "📝 Configuring containerd..."
+mkdir -p /etc/containerd
+containerd config default | tee /etc/containerd/config.toml
+sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+systemctl restart containerd
 
-echo "📥 Installing Kubernetes kubelet, kubeadm, kubectl v${K8S_VERSION}..."
-echo "If the folder `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below."
-mkdir -p -m 755 /etc/apt/keyrings
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/deb/Release.key | sudo gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg # allow unprivileged APT programs to read this keyring
+# --- Install Kubernetes Components ---
+echo "☸️ Installing Kubernetes components..."
+mkdir -p /etc/apt/keyrings
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/deb/Release.key" | sudo gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list   # helps tools such as command-not-found to work correctly
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
-echo "📥 Installing kubelet, kubeadm, kubectl..."
 apt-get update
 apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 
+# --- Join Master Node to the Cluster ---
 echo "🔑 Joining the node as control-plane to the cluster..."
+kubeadm join "${MASTER_API_SERVER}" \
+    --token "${TOKEN}" \
+    --discovery-token-ca-cert-hash "${DISCOVERY_HASH}" \
+    --control-plane --certificate-key "${CERT_KEY}"
 
-sudo kubeadm join ${MASTER_API_SERVER} \
-  --token ${TOKEN} \
-  --discovery-token-ca-cert-hash ${DISCOVERY_HASH} \
-  --control-plane --certificate-key ${CERT_KEY}
-
-echo "🎉 Node successfully joined as a master to the Kubernetes cluster!"
+echo "🎉 Master node successfully joined the Kubernetes cluster!"
