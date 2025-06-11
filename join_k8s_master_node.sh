@@ -99,7 +99,46 @@ echo "🔑 Joining the node as control-plane to the cluster..."
 kubeadm join "${MASTER_API_SERVER}" \
     --token "${TOKEN}" \
     --discovery-token-ca-cert-hash "${DISCOVERY_HASH}" \
-    --certificate-key "${CERT_KEY}" \
-    --control-plane
+    --control-plane --certificate-key "${CERT_KEY}"
 
 echo "🎉 Master node successfully joined the Kubernetes cluster!"
+
+# 🔐 Configure Kubectl
+echo "🔐 Setting up kubectl access..."
+mkdir -p "$HOME/.kube"
+cp -i /etc/kubernetes/admin.conf "$HOME/.kube/config"
+chown "$(id -u):$(id -g)" "$HOME/.kube/config"
+
+# ⚡ Enable kubectl Autocomplete
+echo "⚡ Setting up kubectl autocomplete..."
+exec bash
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc
+source ~/.bashrc
+
+# ✅ Verify Kubernetes & Calico Deployment
+echo "📡 Checking available namespaces..."
+kubectl get ns
+
+echo "📡 Checking Tigera Operator pods..."
+kubectl get pods -n tigera-operator -o wide
+
+echo "📡 Watching Calico pods as they initialize..."
+watch kubectl get pod -n calico-system
+
+echo "📡 Checking kube-system namespace pods..."
+kubectl get po -n kube-system -o wide
+
+echo "📡 Displaying detailed pod information from kube-system..."
+kubectl get pod -n kube-system -o wide
+
+echo "📡 Checking Kubernetes cluster nodes..."
+kubectl get nodes
+
+echo "📡 Listing all pods across namespaces..."
+kubectl get pod -o wide
+
+echo "📡 Displaying detailed pod information from kube-system..."
+kubectl get pod -n kube-system -o wide
+
+echo "✅ Kubernetes Master Node setup completed successfully! 🎉"
