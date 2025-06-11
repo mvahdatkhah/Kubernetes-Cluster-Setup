@@ -155,13 +155,13 @@ echo "🔎 Checking available namespaces..."
 kubectl get ns
 
 echo "🔎 Checking Tigera Operator pods..."
-kubectl get pods -n tigera-operator
+kubectl get pods -n tigera-operator -o wide
 
 echo "🔎 Watching Calico pods as they initialize..."
-kubectl get pod -n calico-system
+kubectl get pod -n calico-system -o wide
 
 echo "🔎 Checking kube-system namespace pods..."
-kubectl get po -n kube-system
+kubectl get po -n kube-system -o wide
 
 echo "🔎 Displaying detailed pod information from kube-system..."
 kubectl get pod -n kube-system -o wide
@@ -170,7 +170,7 @@ echo "🔎 Checking the status of cluster nodes..."
 kubectl get nodes
 
 echo "🔎 Listing all pods across namespaces..."
-kubectl get pod
+kubectl get pod -o wide
 
 echo "🔎 Displaying detailed pod information from kube-system..."
 kubectl get pod -n kube-system -o wide
