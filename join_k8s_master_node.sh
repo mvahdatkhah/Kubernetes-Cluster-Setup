@@ -99,6 +99,7 @@ echo "🔑 Joining the node as control-plane to the cluster..."
 kubeadm join "${MASTER_API_SERVER}" \
     --token "${TOKEN}" \
     --discovery-token-ca-cert-hash "${DISCOVERY_HASH}" \
-    --control-plane --certificate-key "${CERT_KEY}"
+    --certificate-key "${CERT_KEY}" \
+    --control-plane
 
 echo "🎉 Master node successfully joined the Kubernetes cluster!"
