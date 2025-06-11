@@ -13,8 +13,10 @@ POD_CIDR="10.10.0.0/16"
 NERDCTL_VERSION="2.1.2"
 APISERVER_ADVERTISE_ADDRESS="192.168.56.109"  # Replace with actual IP
 
-# --- Kubeadm Join Command (Replace This) ---
-KUBEADM_JOIN_COMMAND="<PASTE_YOUR_FULL_KUBEADM_JOIN_COMMAND_HERE>"
+# --- Worker Node Join Parameters (Replace These) ---
+MASTER_API_SERVER="${APISERVER_ADVERTISE_ADDRESS}:6443"
+TOKEN="<YOUR_KUBEADM_TOKEN>"
+DISCOVERY_HASH="<YOUR_DISCOVERY_HASH>"
 
 # --- System Preparation ---
 echo "🧹 Disabling swap..."
@@ -38,7 +40,14 @@ net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward = 1
 EOF
+
+# --- Apply sysctl params without reboot ---
+echo "🛡️ Apply sysctl params..."
 sysctl --system
+
+echo "🛡️ Verify that the net.bridge.bridge-nf-call-iptables, net.bridge.bridge-nf-call-ip6tables, and net.ipv4.ip_forward system..."
+sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+
 
 # --- Install Dependencies ---
 echo "📦 Installing dependencies..."
@@ -52,19 +61,22 @@ rm /tmp/containerd.tar.gz
 
 echo "🔧 Setting up containerd systemd service..."
 wget -qO /usr/lib/systemd/system/containerd.service "https://raw.githubusercontent.com/containerd/containerd/main/containerd.service"
-systemctl daemon-reexec
-systemctl enable --now containerd
-
-# --- Install Nerdctl ---
-echo "🐳 Installing nerdctl..."
-wget -qO /tmp/nerdctl.tar.gz "https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-full-${NERDCTL_VERSION}-linux-amd64.tar.gz"
-tar -C /usr/local -xzf /tmp/nerdctl.tar.gz
-rm /tmp/nerdctl.tar.gz
+sudo systemctl daemon-reload
+sudo systemctl enable --now containerd
 
 # --- Install Runc ---
 echo "🔧 Installing runc..."
 wget -qO /usr/local/sbin/runc "https://github.com/opencontainers/runc/releases/download/v${RUNC_VERSION}/runc.amd64"
-chmod +x /usr/local/sbin/runc
+sudo install -m 755 runc.amd64 /usr/local/sbin/runc
+ls -l /usr/local/sbin/
+rm -rf runc.amd64
+
+# --- Install Containerd ---
+echo "🔧 Installing Containerd..."
+sudo mkdir -p /etc/containerd/
+containerd config default | sudo tee /etc/containerd/config.toml
+ls -l /etc/containerd/
+sudo systemctl restart containerd
 
 # --- Install CNI Plugins ---
 echo "🌐 Installing CNI plugins..."
@@ -80,6 +92,12 @@ containerd config default | tee /etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 systemctl restart containerd
 
+# --- Install Nerdctl ---
+echo "🐳 Installing nerdctl..."
+wget -qO /tmp/nerdctl.tar.gz "https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-full-${NERDCTL_VERSION}-linux-amd64.tar.gz"
+tar -C /usr/local -xzf /tmp/nerdctl.tar.gz
+rm /tmp/nerdctl.tar.gz
+
 # --- Install Kubernetes Components ---
 echo "☸️ Installing Kubernetes components..."
 mkdir -p /etc/apt/keyrings
@@ -93,6 +111,8 @@ apt-mark hold kubelet kubeadm kubectl
 
 # --- Join Worker Node to the Cluster ---
 echo "🔑 Joining the Kubernetes cluster..."
-kubeadm join ${KUBEADM_JOIN_COMMAND}
+kubeadm join "${MASTER_API_SERVER}" \
+    --token "${TOKEN}" \
+    --discovery-token-ca-cert-hash "${DISCOVERY_HASH}"
 
 echo "🎉 Worker node successfully joined the Kubernetes cluster!"
